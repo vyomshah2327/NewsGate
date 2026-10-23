@@ -1,0 +1,2 @@
+[console_scripts]
+newsgate = newsgate.cli:main

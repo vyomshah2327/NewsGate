@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "newsgate"
+version = "0.1.0"
+description = "Leakage-safe study of when financial news adds predictive value beyond prices."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "numpy",
+  "pandas>=2.0",
+  "pyarrow",
+  "scipy",
+  "scikit-learn",
+  "lightgbm",
+  "matplotlib",
+  "pyyaml",
+]
+
+[project.optional-dependencies]
+nlp = ["vaderSentiment", "transformers", "torch"]
+data = ["yfinance"]
+app = ["streamlit"]
+dev = ["pytest", "nbformat"]
+
+[project.scripts]
+newsgate = "newsgate.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

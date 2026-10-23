@@ -5,9 +5,12 @@ scipy
 scikit-learn
 statsmodels
 lightgbm
+matplotlib
+pyyaml
+vaderSentiment
 transformers
 torch
-vaderSentiment
 yfinance
-matplotlib
-jupyter
+streamlit
+pytest
+nbformat

@@ -1,0 +1,18 @@
+# Fast end-to-end run on a synthetic world with a known planted signal. No network needed.
+data:
+  source: synthetic
+  synthetic:
+    n_tickers: 24
+    n_days: 1400
+    seed: 7
+    attention_effect: 0.45   # set to 0 for a pure null world
+    sentiment_effect: 0.0
+sentiment:
+  scorers: [vader]
+evaluation:
+  min_train_days: 504
+  test_block_days: 63
+  purge_days: 5
+  bootstrap_resamples: 1000
+run:
+  name: synthetic_demo
