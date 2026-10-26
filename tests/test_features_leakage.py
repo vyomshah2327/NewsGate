@@ -77,3 +77,17 @@ def test_large_move_threshold_uses_training_rows_only(full_panel):
     labels = base.label(full_panel.dropna(subset=["tgt_abs"]))
     assert set(np.unique(labels)) <= {0, 1}
     assert 0.07 < labels[: len(train)].mean() < 0.13
+
+
+def test_price_gaps_do_not_create_multi_month_labels_or_stale_features(cfg, world):
+    """A hole in one ticker's price file must not turn into a 'next-day' label that spans months."""
+    ticker = world.tickers[0]
+    prices = world.prices.copy()
+    dates = np.sort(prices["date"].unique())
+    hole = (prices["ticker"] == ticker) & (prices["date"] > dates[300]) & (prices["date"] <= dates[420])
+    panel, _ = build_panel(cfg, world.news, prices[~hole], world.tickers, world.metadata)
+    mine = panel[panel["ticker"] == ticker].dropna(subset=["tgt_end_date"])
+    assert ((mine["tgt_end_date"] - mine["date"]).dt.days <= 11).all()
+    after = mine[mine["date"] > dates[420]]
+    longest = max(max(cfg.features.momentum_windows), max(cfg.features.vol_windows))
+    assert after["date"].min() > dates[420] + pd.Timedelta(days=longest), "rows right after the hole are dropped"

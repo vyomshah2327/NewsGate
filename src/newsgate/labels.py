@@ -27,14 +27,28 @@ def market_returns(all_prices: pd.DataFrame, symbol: str, stock_tickers: list[st
     return series.rename("mkt_logret").reset_index()
 
 
+# Longest plausible calendar span of a window of ``horizon`` sessions: 4 + 7 * horizon days.
+MAX_SPAN_BASE_DAYS = 4
+MAX_SPAN_PER_SESSION_DAYS = 7
+
+
 def add_targets(prices: pd.DataFrame, market: pd.DataFrame, horizon: int) -> pd.DataFrame:
-    """Forward log return, its absolute value, the market-adjusted ("abnormal") return and end date."""
+    """Forward log return, its absolute value, the market-adjusted ("abnormal") return and end date.
+
+    A target whose window spans an abnormally long stretch of calendar time (a trading halt,
+    delisting and relisting, or a hole in the price file) is not a ``horizon``-session return, so
+    it is set to missing instead of being treated as one.
+    """
+    max_span = pd.Timedelta(days=MAX_SPAN_BASE_DAYS + MAX_SPAN_PER_SESSION_DAYS * horizon)
     mkt = market.sort_values("date").set_index("date")["mkt_logret"].fillna(0.0).cumsum()
     pieces = []
     for ticker, g in prices.sort_values(["ticker", "date"]).groupby("ticker", sort=True):
         logp = np.log(g["adj_close"].to_numpy())
         fwd = pd.Series(logp).shift(-horizon).to_numpy() - logp
         end = g["date"].shift(-horizon).reset_index(drop=True)
+        too_long = ((end - g["date"].reset_index(drop=True)) > max_span).to_numpy()
+        fwd = np.where(too_long, np.nan, fwd)
+        end = end.where(~pd.Series(too_long))
         mkt_start = mkt.reindex(g["date"]).to_numpy()
         mkt_end = mkt.reindex(end).to_numpy()
         pieces.append(pd.DataFrame({

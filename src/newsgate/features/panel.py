@@ -31,6 +31,28 @@ def prepare_news(
     return clustered, [s.name for s in scorers]
 
 
+MAX_PRICE_GAP_DAYS = 10  # a longer hole between two price rows counts as a data gap
+
+
+def _drop_rows_after_price_gaps(panel: pd.DataFrame, prices: pd.DataFrame, warmup_rows: int) -> pd.DataFrame:
+    """Drop the first ``warmup_rows`` rows after any long hole in a ticker's price history.
+
+    Rolling price features computed across such a hole mix a stale price with a fresh one, so they
+    are not comparable with ordinary days. The very first segment is already handled by the
+    ordinary warmup drop.
+    """
+    px = prices.sort_values(["ticker", "date"])[["ticker", "date"]].copy()
+    gap = px.groupby("ticker")["date"].diff().dt.days > MAX_PRICE_GAP_DAYS
+    px["_segment"] = gap.groupby(px["ticker"]).cumsum()
+    px["_pos"] = px.groupby(["ticker", "_segment"]).cumcount()
+    bad = px[(px["_segment"] > 0) & (px["_pos"] < warmup_rows)][["ticker", "date"]].assign(_bad=True)
+    if bad.empty:
+        return panel
+    out = panel.merge(bad, on=["ticker", "date"], how="left")
+    log.info("Dropped %d rows that follow a gap in the price history", int(out["_bad"].notna().sum()))
+    return out[out["_bad"].isna()].drop(columns="_bad")
+
+
 def build_panel(
     cfg: Config,
     news: pd.DataFrame,
@@ -55,6 +77,7 @@ def build_panel(
 
     longest = max(max(cfg.features.momentum_windows), max(cfg.features.vol_windows))
     panel = panel.dropna(subset=[f"px_mom_{max(cfg.features.momentum_windows)}", f"px_vol_{max(cfg.features.vol_windows)}"])
+    panel = _drop_rows_after_price_gaps(panel, stock_prices, longest)
     if cfg.data.start:  # prices before the study start were loaded only to warm up the rolling features
         panel = panel[panel["date"] >= pd.Timestamp(cfg.data.start)]
     if metadata is not None and "sector" in metadata:
