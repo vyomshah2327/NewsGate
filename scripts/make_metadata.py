@@ -2,8 +2,9 @@
 
 FNSPID has no sector or market-cap table, so this derives what the sampler needs from the data:
 
-* eligibility: a price file that starts by the study start and runs to the study end, and at
-  least ``--min-articles`` articles in the study window;
+* eligibility: a price file that starts by the study start and runs to the study end, at least
+  ``--min-articles`` articles and ``--min-news-days`` distinct news days in the study window, and
+  not mostly fund news (headlines naming an ETF or fund), which screens out ETFs;
 * ``market_cap``: a PROXY, the average daily dollar volume (close x volume) over the last 250
   trading days. It orders companies by size and liquidity; it is not a market capitalisation;
 * ``sector`` is left empty, so sector stratification and the sector robustness check need a
@@ -19,14 +20,23 @@ import argparse
 from pathlib import Path
 
 import pandas as pd
+import pyarrow.compute as pc
+import pyarrow.parquet as pq
+
+FUND_WORDS = r"\b(ETF|ETFs|ETN|Fund|Funds|Trust Units)\b"
 
 
-def build(news_path: Path, price_dir: Path, start: str, end: str, min_articles: int, exclude: set[str]) -> pd.DataFrame:
-    news = pd.read_parquet(news_path, columns=["Date", "Stock_symbol"])
+def build(news_path: Path, price_dir: Path, start: str, end: str, min_articles: int, exclude: set[str],
+          min_news_days: int = 500, max_fund_share: float = 0.2) -> pd.DataFrame:
+    table = pq.read_table(news_path, columns=["Date", "Stock_symbol", "Article_title"])
+    fund_flag = pc.match_substring_regex(table["Article_title"], FUND_WORDS).to_numpy(zero_copy_only=False)
+    news = table.select(["Date", "Stock_symbol"]).to_pandas().assign(fund=fund_flag)
+    del table
     day = pd.to_datetime(news["Date"].str[:10], errors="coerce")
     news = news.assign(day=day)[(day >= start) & (day <= end)]
-    counts = news.groupby("Stock_symbol").agg(n_articles=("day", "size"), n_news_days=("day", "nunique"))
-    counts = counts[counts["n_articles"] >= min_articles]
+    counts = news.groupby("Stock_symbol").agg(n_articles=("day", "size"), n_news_days=("day", "nunique"), fund_share=("fund", "mean"))
+    counts = counts[(counts["n_articles"] >= min_articles) & (counts["n_news_days"] >= min_news_days)
+                    & (counts["fund_share"] <= max_fund_share)]
 
     rows = []
     for ticker in counts.index:
@@ -55,9 +65,10 @@ if __name__ == "__main__":
     ap.add_argument("--start", default="2012-01-01")
     ap.add_argument("--end", default="2023-12-31")
     ap.add_argument("--min-articles", type=int, default=1500)
+    ap.add_argument("--min-news-days", type=int, default=500)
     ap.add_argument("--exclude", default="SPY,QQQ,DIA,IWM", help="comma separated tickers to leave out (benchmarks)")
     a = ap.parse_args()
-    meta = build(a.news, a.prices, a.start, a.end, a.min_articles, set(a.exclude.split(",")))
+    meta = build(a.news, a.prices, a.start, a.end, a.min_articles, set(a.exclude.split(",")), a.min_news_days)
     a.out.parent.mkdir(parents=True, exist_ok=True)
     meta.to_csv(a.out, index=False)
     print(f"{len(meta)} eligible tickers -> {a.out}")
