@@ -76,3 +76,17 @@ def test_stratified_sample_spreads_across_size_and_sector():
     sizes = pd.qcut(meta["market_cap"].rank(method="first"), 3, labels=False)
     picked = sizes[meta["ticker"].isin(chosen)].value_counts()
     assert picked.min() >= 3
+
+
+def test_fnspid_price_source_clips_to_the_study_window(tmp_path):
+    dates = pd.bdate_range("2000-01-03", "2024-03-01")
+    frame = pd.DataFrame({"date": dates.strftime("%Y-%m-%d"), "open": 1.0, "high": 1.0, "low": 1.0, "close": 1.0,
+                          "adj close": 1.0, "volume": 10})
+    frame.to_csv(tmp_path / "AAA.csv", index=False)
+    from newsgate.data.sources import FnspidPriceSource
+    out = FnspidPriceSource(tmp_path, "2012-01-01", "2023-12-31").load(["AAA"])
+    assert out["date"].min() >= pd.Timestamp("2012-01-01") - pd.Timedelta(days=400)
+    assert out["date"].min() < pd.Timestamp("2011-01-01"), "a warmup margin before the start is kept"
+    assert out["date"].max() <= pd.Timestamp("2023-12-31") + pd.Timedelta(days=15)
+    unclipped = FnspidPriceSource(tmp_path).load(["AAA"])
+    assert unclipped["date"].min() == pd.Timestamp("2000-01-03")

@@ -55,6 +55,8 @@ def build_panel(
 
     longest = max(max(cfg.features.momentum_windows), max(cfg.features.vol_windows))
     panel = panel.dropna(subset=[f"px_mom_{max(cfg.features.momentum_windows)}", f"px_vol_{max(cfg.features.vol_windows)}"])
+    if cfg.data.start:  # prices before the study start were loaded only to warm up the rolling features
+        panel = panel[panel["date"] >= pd.Timestamp(cfg.data.start)]
     if metadata is not None and "sector" in metadata:
         panel = panel.merge(metadata[["ticker", "sector"]], on="ticker", how="left")
     panel = panel.sort_values(["date", "ticker"]).reset_index(drop=True)

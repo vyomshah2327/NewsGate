@@ -167,10 +167,26 @@ def standardize_price_frame(frame: pd.DataFrame, ticker: str) -> pd.DataFrame:
 
 
 class FnspidPriceSource(PriceSource):
-    """Reads one CSV (or Parquet) file per ticker from a directory."""
+    """Reads one CSV (or Parquet) file per ticker from a directory.
 
-    def __init__(self, price_dir: str | Path):
+    When ``start``/``end`` are given, prices are clipped to that window plus a margin: ``warmup_days``
+    before the start (so rolling features have history) and ``tail_days`` after the end (so the last
+    forecasts still have an outcome). Without clipping, decades of price history that have no news
+    would enter the modelling panel.
+    """
+
+    def __init__(self, price_dir: str | Path, start: str | None = None, end: str | None = None,
+                 warmup_days: int = 400, tail_days: int = 15):
         self.price_dir = Path(price_dir)
+        self.lo = pd.Timestamp(start) - pd.Timedelta(days=warmup_days) if start else None
+        self.hi = pd.Timestamp(end) + pd.Timedelta(days=tail_days) if end else None
+
+    def _clip(self, frame: pd.DataFrame) -> pd.DataFrame:
+        if self.lo is not None:
+            frame = frame[frame["date"] >= self.lo]
+        if self.hi is not None:
+            frame = frame[frame["date"] <= self.hi]
+        return frame.reset_index(drop=True)
 
     def load(self, tickers: Iterable[str]) -> pd.DataFrame:
         frames = []
@@ -178,7 +194,7 @@ class FnspidPriceSource(PriceSource):
             for suffix, reader in ((".csv", pd.read_csv), (".parquet", pd.read_parquet)):
                 path = self.price_dir / f"{ticker}{suffix}"
                 if path.exists():
-                    frames.append(standardize_price_frame(reader(path), ticker))
+                    frames.append(self._clip(standardize_price_frame(reader(path), ticker)))
                     break
             else:
                 log.warning("No price file found for %s in %s", ticker, self.price_dir)
@@ -250,7 +266,7 @@ def build_sources(cfg: DataConfig) -> Sources:
 
     news = FnspidNewsSource(cfg.news_path, tickers, cfg.start, cfg.end, cfg.source_timezone, cfg.timestamp_mode)
     if cfg.source == "fnspid":
-        prices: PriceSource = FnspidPriceSource(cfg.price_dir)
+        prices: PriceSource = FnspidPriceSource(cfg.price_dir, cfg.start, cfg.end)
     elif cfg.source == "yfinance":
         prices = YFinancePriceSource(cfg.start, cfg.end, cfg.cache_dir)
     else:
