@@ -57,10 +57,14 @@ Setting `attention_effect: 0` and `sentiment_effect: 0` in `configs/synthetic.ya
 
 ## Running on the real data
 
-1. Download FNSPID (Hugging Face `Zihan1004/FNSPID`) into `data/raw/fnspid/` and put daily prices in `data/raw/fnspid/prices/` (or set `source: yfinance`).
-2. Download the Loughran and McDonald master dictionary to `data/external/` (we do not redistribute it).
-3. Run `notebooks/01_data_audit.ipynb` against `configs/default.yaml`. The FNSPID date format and timezone are not documented, so confirm `source_timezone` and `timestamp_mode` here before trusting any result.
-4. `newsgate all --config configs/default.yaml`, then `newsgate holdout --config configs/default.yaml` once the design is frozen.
+1. Download `Stock_news/nasdaq_exteral_data.csv` (about 23 GB) and `Stock_price/full_history.zip` from Hugging Face (`Zihan1004/FNSPID`). Put the CSV in `data/raw/fnspid/` and the per-ticker price CSVs directly in `data/raw/fnspid/prices/`.
+2. Download the Loughran and McDonald master dictionary into `data/external/` (we do not redistribute it).
+3. Shrink the news file once (it drops the article bodies and summaries, and takes a while):
+   `python scripts/prepare_fnspid.py data/raw/fnspid/nasdaq_exteral_data.csv data/raw/fnspid/news_slim.parquet`
+4. Run `notebooks/01_data_audit.ipynb` against `configs/default.yaml`.
+5. `newsgate all --config configs/default.yaml`, then `newsgate holdout --config configs/default.yaml` once the design is frozen.
+
+Finding from the audit of a 30,000 row sample: FNSPID dates end in `UTC` and 99.9% sit at exactly 00:00:00, so they are dates without a time of day. The pipeline therefore uses each article only from the next trading day, which is the conservative rule.
 
 ## How leakage is controlled
 

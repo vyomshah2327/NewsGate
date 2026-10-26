@@ -3,18 +3,18 @@
 # notebooks/01_data_audit.ipynb and choose the tickers and date range.
 data:
   source: fnspid            # fnspid | yfinance | synthetic
-  news_path: data/raw/fnspid/news.parquet
+  news_path: data/raw/fnspid/news_slim.parquet   # made by scripts/prepare_fnspid.py from nasdaq_exteral_data.csv
   price_dir: data/raw/fnspid/prices
   metadata_path: data/raw/metadata.csv   # ticker, sector, market_cap (for stratified sampling)
   n_tickers: 40
   start: "2012-01-01"
   end: "2023-12-31"
-  source_timezone: UTC      # TO VERIFY against the FNSPID Date column
-  timestamp_mode: auto      # auto | datetime | date_only
+  source_timezone: UTC      # checked on a 30,000 row sample: values end in 'UTC'
+  timestamp_mode: auto      # auto | datetime | date_only. In the sample 99.9% of times are exactly 00:00:00, so auto resolves to date_only
   market_symbol: SPY        # falls back to an equal-weight sample mean if absent
 sentiment:
   scorers: [vader, lm, finbert]
-  lm_dictionary_path: data/external/Loughran-McDonald_MasterDictionary.csv
+  lm_dictionary_path: data/external/Loughran-McDonald_MasterDictionary_1993-2025.csv
 target:
   horizon: 1
   quantile: 0.9
