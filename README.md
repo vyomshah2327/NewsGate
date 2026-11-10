@@ -66,6 +66,24 @@ Setting `attention_effect: 0` and `sentiment_effect: 0` in `configs/synthetic.ya
 
 Finding from the audit of a 30,000 row sample: FNSPID dates end in `UTC` and 99.9% sit at exactly 00:00:00, so they are dates without a time of day. The pipeline therefore uses each article only from the next trading day, which is the conservative rule.
 
+## Round 2 (the pre-registered planned round)
+
+`docs/preregistration.md` fixes the hypotheses, the ten tests and the decision rule before any result exists.
+`configs/round2_h1.yaml` and `configs/round2_h5.yaml` are the frozen configurations (all 523 eligible tickers).
+
+```bash
+python scripts/make_metadata.py --news data/raw/fnspid/news_slim.parquet --prices data/raw/fnspid/prices --out data/raw/metadata.csv
+python scripts/score_finbert.py --config configs/round2_h5.yaml      # one time, needs internet, resumable
+for h in 1 5; do newsgate panel -c configs/round2_h$h.yaml && newsgate cv -c configs/round2_h$h.yaml; done
+newsgate family -c configs/round2_h1.yaml -c configs/round2_h5.yaml --split cv
+# only when the design is frozen, exactly once:
+for h in 1 5; do newsgate holdout -c configs/round2_h$h.yaml; done
+newsgate family -c configs/round2_h1.yaml -c configs/round2_h5.yaml --split holdout
+```
+
+FinBERT's weights come from Hugging Face, so scoring is a separate step. It writes `scores_finbert.parquet` into
+`data.cache_dir` (`data/processed` by default) and the pipeline reads it from there without loading the model.
+
 ## How leakage is controlled
 
 - News published at or after 16:00 US/Eastern, on weekends or on holidays is used from the next trading day. Date-only timestamps are used from the next trading day strictly after the date.

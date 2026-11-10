@@ -30,6 +30,10 @@ def _parser() -> argparse.ArgumentParser:
     run_all.add_argument("--final", action="store_true", help="also evaluate the final holdout")
     synth = add("write-synthetic", "write a synthetic world in FNSPID-like file layout")
     synth.add_argument("--out", default="data/synthetic", help="output directory")
+    fam = sub.add_parser("family", help="the pre-registered family of tests, with Holm correction across horizons")
+    fam.add_argument("--config", "-c", action="append", required=True, help="one config per horizon (repeat the flag)")
+    fam.add_argument("--split", choices=["cv", "holdout"], default="cv")
+    fam.add_argument("--out", default=None, help="output directory (default: <output_dir>/family)")
     dash = add("dashboard", "launch the Streamlit dashboard")
     dash.add_argument("--port", default="8501")
     return parser
@@ -37,6 +41,12 @@ def _parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
+    if args.command == "family":
+        from newsgate.evaluation.family import run_family
+
+        table = run_family([load_config(c) for c in args.config], args.split, args.out)
+        print(table.round(5).to_string(index=False))
+        return 0
     cfg = load_config(args.config)
     configure_logging(cfg.run.log_level)
 
