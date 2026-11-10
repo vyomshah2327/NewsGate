@@ -90,4 +90,9 @@ The single primary test is T3 at `h = 5`. It is also reported on its own, uncorr
 
 ## 8. Deviations log
 
-(none so far)
+No change to the specification. Two logged events:
+
+* FinBERT scores were supplied after Stage A, as rule 7.2 allows. Stage B used the frozen configs with only the scorer list and run name changed (scorers vader, lm, finbert).
+* The first Stage B launch of both horizons at once ran out of memory (exit 137) and was rerun one horizon at a time. This changed no setting.
+
+Outcome (Stage B holdout, run once per horizon): no test passes the decision rule. The primary test (T3, h = 5) has mean Brier difference -0.000033, uncorrected p = 0.013, Holm p = 0.104. The smallest Holm p in the family is 0.100 (T1 h5 and T5 h5). Reported as no evidence of improvement. See results/round2_stageB_family_holdout.csv.
