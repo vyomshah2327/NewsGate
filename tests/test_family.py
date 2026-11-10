@@ -53,3 +53,17 @@ def test_missing_prediction_column_is_an_error():
     frame = _frame(5, True).drop(columns=["p__gate"])
     with pytest.raises(Exception):
         compute_family({1: frame}, {1: EvalConfig(bootstrap_resamples=50)})
+
+
+def test_loader_does_not_duplicate_columns_the_gate_already_added(tmp_path):
+    from newsgate.config import config_from_dict
+    from newsgate.evaluation.family import _load_frame
+
+    root = tmp_path / "r"
+    root.mkdir()
+    frame = _frame(6, True, n_days=30)
+    frame.to_parquet(root / "oof_cv.parquet")  # already has att_has_news and att_surprise
+    pd.DataFrame({"ticker": frame["ticker"], "date": frame["date"], "att_has_news": 0.0, "att_surprise": 99.0}).to_parquet(root / "panel.parquet")
+    cfg = config_from_dict({"run": {"name": "r", "output_dir": str(tmp_path)}})
+    out = _load_frame(cfg, "cv")
+    assert "att_surprise_x" not in out and out["att_surprise"].max() < 50, "the oof columns must be kept as they are"

@@ -67,7 +67,10 @@ def compute_family(frames: Mapping[int, pd.DataFrame], eval_cfgs: Mapping[int, E
 def _load_frame(cfg: Config, split: str) -> pd.DataFrame:
     root = Path(cfg.run.output_dir) / cfg.run.name
     oof = pd.read_parquet(root / ("oof_cv.parquet" if split == "cv" else "oof_holdout.parquet"))
-    panel = pd.read_parquet(root / "panel.parquet", columns=["ticker", "date", "att_has_news", "att_surprise"])
+    wanted = [c for c in ("att_has_news", "att_surprise") if c not in oof.columns]  # the gate stage may have added them
+    if not wanted:
+        return oof
+    panel = pd.read_parquet(root / "panel.parquet", columns=["ticker", "date"] + wanted)
     return oof.merge(panel, on=["ticker", "date"], how="left")
 
 
