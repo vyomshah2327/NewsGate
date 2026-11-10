@@ -1,0 +1,65 @@
+# Round 2 ("planned round"), horizon 5. FROZEN by docs/preregistration.md before any round 2 result exists.
+# Universe: every ticker that passed scripts/make_metadata.py on the FNSPID files (523 tickers).
+data:
+  source: fnspid
+  news_path: data/raw/fnspid/news_slim.parquet
+  price_dir: data/raw/fnspid/prices
+  metadata_path: data/raw/metadata.csv
+  tickers: [
+    A, AA, AAL, AAN, AAP, AAPL, AB, ABR, ABT, ACAD, ACB, ACGL, ACM, ACN, ACOR, ADBE, ADI, ADM, ADP,
+    ADSK, AEE, AEO, AEP, AES, AFG, AFL, AG, AGCO, AGNC, AI, AIG, AIR, AIT, AIZ, AKAM, AL, ALB, ALGN,
+    ALGT, ALK, ALKS, ALL, ALV, AMAT, AMD, AME, AMGN, AMT, AMTD, AMX, AN, ANF, AON, APA, APD, APH, APO,
+    ARCC, ARE, ARLP, ARR, ASML, ATI, AVGO, AVY, AXP, AZN, AZO, BA, BAH, BAM, BAX, BBY, BEN, BEP, BG,
+    BHP, BIDU, BIG, BIIB, BIP, BK, BKE, BKNG, BKR, BLDR, BMO, BMRN, BNS, BOOT, BR, BRO, BSX, BTI, BUD,
+    BWA, BX, BXP, BYD, BZH, C, CACI, CAG, CAH, CAKE, CALM, CAR, CAT, CCI, CCJ, CDNS, CE, CF, CFR, CHH,
+    CHN, CHS, CHTR, CI, CIEN, CINF, CL, CLF, CLX, CM, CMC, CMCSA, CME, CMG, CMI, CMS, CMTL, CNA, CNI,
+    CNK, CNP, CNQ, CNX, CODI, COF, COLM, CONN, COO, COP, COR, COST, CP, CPB, CPE, CPRT, CR, CRC, CRM,
+    CSIQ, CSL, CSX, CTSH, CUK, CVE, CVX, CYH, D, DAL, DB, DBC, DD, DDD, DDS, DE, DECK, DEO, DFS, DGX,
+    DHI, DHR, DIG, DIN, DIS, DISH, DK, DKS, DLTR, DOV, DPZ, DQ, DRI, DTE, DUK, DVA, DVAX, DVN, DXCM, DY,
+    DZZ, E, EA, EAT, EBAY, EBS, ED, EFX, EGO, EL, EME, EMN, EMR, ENB, EOG, EPD, EPR, EPV, EQNR, EQT,
+    ERIC, ERJ, ESS, ETR, EW, EWI, EWP, EWU, EXC, EXEL, EXPE, EXR, FAST, FCEL, FCG, FDS, FDX, FHN, FIS,
+    FITB, FL, FLO, FLR, FLS, FLT, FMC, FNV, FOSL, FRO, FSLR, FTI, FTNT, FXA, FXF, FXP, GBX, GCI, GE,
+    GEO, GERN, GFI, GGG, GIII, GILD, GIS, GME, GNRC, GNTX, GOL, GOLD, GOOG, GPN, GPOR, GREK, GRMN, GRPN,
+    GS, GSK, GWW, GXC, H, HA, HAE, HAIN, HAL, HAS, HBAN, HBI, HCA, HES, HIG, HL, HOG, HOLX, HP, HPQ,
+    HSBC, HSIC, HTZ, HUM, HUN, ICE, INCY, INDY, INFN, INFY, INO, INTC, JACK, JBL, JCI, JKS, JNJ, JPM,
+    JWN, K, KEY, KGC, KIM, KKR, KLAC, KMB, KMI, KO, KSS, KTOS, LDOS, LEG, LEN, LLY, LMT, LNG, LOW, LUV,
+    LYB, MNKD, MNST, MOMO, MOS, MPW, MRK, MRO, MRVL, MS, MSCI, MSFT, MSI, MT, MTB, MTG, MTH, MTN, MU,
+    MYGN, NDAQ, NDSN, NE, NEE, NEM, NG, NGL, NKE, NKTR, NLY, NNN, NOC, NOG, NOK, NOV, NRG, NSC, NTAP,
+    NTES, NTRS, NUE, NVAX, NVDA, NVO, NVR, NVS, NWL, NYCB, OC, OCN, ODP, OHI, OKE, OLED, OPK, ORCL,
+    ORLY, OXY, PAA, PAAS, PAG, PAYX, PBA, PBR, PCG, PDCO, PEG, PENN, PEP, PFE, PFG, PGJ, PGR, PH, PHG,
+    PHM, PKG, PLCE, PLD, PLUG, PNC, PNR, PPC, PRGO, PRU, PSA, PSEC, PVH, PWR, PXD, PZZA, QCOM, QGEN,
+    REGN, RF, RGR, RL, RLI, RMBS, RMD, ROK, ROP, ROST, RRC, RS, RSG, RSP, RY, SPR, SPWR, SU, SWK, SWKS,
+    SWN, SYK, SYNA, SYY, T, TAP, TD, TEVA, TEX, TGT, THC, THS, TJX, TM, TMO, TMUS, TOL, TPX, TRGP, TRI,
+    TRIP, TRN, TROW, TRP, TRV, TSCO, TSLA, TSM, TSN, TTWO, TUP, TWLO, TXN, TXRH, UBS, UDN, UGL, UHS, UL,
+    ULTA, UNFI, UNG, UNP, UPS, URBN, URI, USB, USD, UTHR, V, VAC, VALE, VFC, VGK, VLO, VMC, VMW, VNO,
+    VOD, VRSK, VRTX, VTR, WAB, WBA, WDC, WEN, WFC, WGO, WHR, WMT, WPC, WSM, X, XEL, XOM, XPO, XPP, XYL,
+    YANG, YCS, YNDX, ZION, ZUMZ
+  ]
+  start: "2012-01-01"
+  end: "2023-12-31"
+  source_timezone: UTC
+  timestamp_mode: auto
+  market_symbol: SPY
+sentiment:
+  scorers: [vader, lm, finbert]
+  lm_dictionary_path: data/external/Loughran-McDonald_MasterDictionary_1993-2025.csv
+target:
+  horizon: 5
+  quantile: 0.9
+  threshold_scope: ticker
+evaluation:
+  min_train_days: 756
+  test_block_days: 126
+  purge_days: 10
+  holdout_fraction: 0.2
+  kinds: [logistic]
+  bootstrap_resamples: 2000
+  block_length: 20
+  alpha: 0.05
+  seed: 0
+gate:
+  enabled: true
+  kind: logistic
+  regressor: lightgbm
+run:
+  name: round2_h5
